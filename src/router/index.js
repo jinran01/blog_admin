@@ -19,11 +19,12 @@ const routes = [
     children:[{
       path: '/test',
       name: 'Test',
-      component: Test
-    },{
-      path: '/test/edit',
-      name: 'Test2',
-      component: Test2
+      component: Test,
+      children: [{
+        path: '/test/:id',
+        name: 'Test2',
+        component: Test2
+      }]
     }
   ]
   }

@@ -6,17 +6,34 @@
         <span>{{ !isCollapse ? '后台管理系统' : 'Fiee' }}</span>
       </div>
       <el-menu default-active="2" class="el-menu-vertical" :collapse="isCollapse" :collapse-transition="false" router>
-        <el-sub-menu index="1">
-          <template #title>
-            <el-icon>
-              <location />
-            </el-icon>
-            <span>Navigator One</span>
-          </template>
-          <el-menu-item index="/test">item one</el-menu-item>
-          <el-menu-item index="/test/edit">item two</el-menu-item>
-        </el-sub-menu>
-
+         <template v-for="(item) in menuStore.menuTree">
+              <template v-if="item.children.length > 0 && item.isHidden === 0">
+                <el-sub-menu :index="item.path">
+                  <template #title>
+                    <el-icon>
+                      <i class="iconfont" :class="item.icon"></i>
+                    </el-icon>
+                    <span>{{ item.name}}</span>
+                  </template>
+                  <el-menu-item v-for="(i,index) in item.children.filter(child => child.isHidden === 0)" :index="i.path">
+                    <template #title>
+                      <el-icon>
+                        <i class="iconfont" :class="i.icon"></i>
+                      </el-icon>
+                      <span>{{ i.name }}</span>
+                    </template>
+                  </el-menu-item>
+                </el-sub-menu>
+              </template>
+              <template v-if="item.children.length == 0 && item.isHidden === 0 " >
+                <el-menu-item :index="item.path">
+                  <el-icon>
+                    <i class="iconfont" :class="item.icon"></i>
+                  </el-icon>
+                  <span>{{ item.name }}</span>
+                </el-menu-item>
+              </template>
+         </template>
       </el-menu>
     </el-aside>
 
@@ -71,6 +88,7 @@
 
 <script>
 import { ref, computed, reactive } from 'vue';
+import { useMenuStore } from '../store/menu';
 // import { useRoute, useRouter } from 'vue-router';
 export default {
   name: 'Layout',
@@ -79,11 +97,10 @@ export default {
       isDark: ''
     })
     const isCollapse = ref(false)
-
+    const menuStore = useMenuStore()
     const toggle = () => {
       isCollapse.value = !isCollapse.value
     }
-
     // const route = useRoute()
     // const router = useRouter()
 
@@ -100,6 +117,7 @@ export default {
     return{
       stat,
       isCollapse,
+      menuStore,
       toggle,
       logout,
       changeDark,

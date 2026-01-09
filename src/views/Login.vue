@@ -64,11 +64,16 @@
 <script>
 import { onBeforeUnmount, reactive, ref } from 'vue';
 import { loginByUsername } from '../network/login';
+import { getMenuTree } from '../network/menu';
+import { addMenusToRouter } from '../router/routerUtils';
+import { useMenuStore } from '../store/menu';
+import { useRouter } from 'vue-router';
 import { sendEamilCode, sendPhoneCode } from '../network/common';
 export default {
   name: "Login",
   setup() {
     let timer = null
+    const router = useRouter()
     const stat = reactive({
       mode: "username", // username / phone / email
       username: "",
@@ -97,17 +102,23 @@ export default {
     const closeModal = () => {
       stat.visible = false
     }
-    const login = ()=> {
+    const login = async ()=> {
       let account;
       //用户名、手机、邮箱登录
       if(stat.mode === 'username') {
         //用户名密码登录
         account=stat.username;
         loginByUsername(account,stat.password).then(res=>{
-          console.log(res);
           // 登录成功
           if(res.flag === true){
             localStorage.setItem('Token',res.data)
+            const menuStore = useMenuStore()
+            // 获取菜单并持久化
+            menuStore.loadMenu()
+            // getMenuTree().then(res=>{
+            //   addMenusToRouter(res.data)
+            // })
+            router.push({path:'/home'})
           }else{
             //登陆失败
             showError('登录失败',res.message)

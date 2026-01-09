@@ -1,7 +1,7 @@
-import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs'
-import { pa } from 'element-plus/es/locales.mjs'
 import {createRouter, createWebHistory, useRouter} from 'vue-router'
-
+import { getMenuTree } from '../network/menu'
+import { addMenusToRouter } from './routerUtils'
+import { useMenuStore } from '../store/menu';
 const Login = () => import("../views/Login.vue")
 const Layout = () => import("../components/Layout.vue")
 const Test = () => import("../views/Test.vue")
@@ -14,23 +14,31 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Layout',
+    name: 'Root',
     component: Layout,
-    children:[{
-      path: '/test',
-      name: 'Test',
-      component: Test,
-      children: [{
-        path: '/test/:id',
-        name: 'Test2',
-        component: Test2
-      }]
-    }
-  ]
   }
+
 ]
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+let hasAddedRoutes = false
+router.beforeEach(async (to, from, next) => {
+  const token = localStorage.getItem('Token')
+  if (!token && to.path !== '/login') {
+    return next('/login')
+  }
+  if (token && !hasAddedRoutes) {
+    const menuStore = useMenuStore()
+    // console.log(menuStore.$state.menuTree);
+    await menuStore.loadMenu()
+    addMenusToRouter(menuStore.menuTree)
+    // const menuTree = await getMenuTree()
+    // addMenusToRouter(menuStore.menuTree)
+    hasAddedRoutes = true
+    return next(to.fullPath) // 确保当前路由生效
+  }
+  next()
 })
 export default router

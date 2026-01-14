@@ -33,7 +33,7 @@ router.beforeEach(async (to, from, next) => {
     const menuStore = useMenuStore()
     // console.log(menuStore.$state.menuTree);
     await menuStore.loadMenu()
-    addMenusToRouter(menuStore.menuTree)
+    // addMenusToRouter(menuStore.menuTree)
     // const menuTree = await getMenuTree()
     // addMenusToRouter(menuStore.menuTree)
     hasAddedRoutes = true

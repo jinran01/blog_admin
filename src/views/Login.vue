@@ -118,7 +118,9 @@ export default {
             // getMenuTree().then(res=>{
             //   addMenusToRouter(res.data)
             // })
-            router.push({path:'/home'})
+            setTimeout(() => {
+              router.push({path:'/home'})
+            }, 1000);
           }else{
             //登陆失败
             showError('登录失败',res.message)

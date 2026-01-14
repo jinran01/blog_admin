@@ -5,38 +5,41 @@
       <div class="logo">
         <span>{{ !isCollapse ? '后台管理系统' : 'Fiee' }}</span>
       </div>
-      <el-menu default-active="2" class="el-menu-vertical" :collapse="isCollapse" :collapse-transition="false" router>
-         <template v-for="(item) in menuStore.menuTree">
-              <template v-if="item.children.length > 0 && item.isHidden === 0">
-                <el-sub-menu :index="item.path">
-                  <template #title>
-                    <el-icon>
-                      <i class="iconfont" :class="item.icon"></i>
-                    </el-icon>
-                    <span>{{ item.name}}</span>
-                  </template>
-                  <el-menu-item v-for="(i,index) in item.children.filter(child => child.isHidden === 0)" :index="i.path">
-                    <template #title>
-                      <el-icon>
-                        <i class="iconfont" :class="i.icon"></i>
-                      </el-icon>
-                      <span>{{ i.name }}</span>
-                    </template>
-                  </el-menu-item>
-                </el-sub-menu>
-              </template>
-              <template v-if="item.children.length == 0 && item.isHidden === 0 " >
-                <el-menu-item :index="item.path">
+      <!-- <SimpleScrollbar style="height: calc(100vh - 60px);"> -->
+      <el-scrollbar height="calc(100vh - 60px)">
+        <el-menu unique-opened="true" default-active="2" class="el-menu-vertical" :collapse="isCollapse"
+          :collapse-transition="false" router>
+          <template v-for="(item) in menuStore.menuTree">
+            <template v-if="item.children.length > 0 && item.isHidden === 0">
+              <el-sub-menu :index="item.path">
+                <template #title>
                   <el-icon>
                     <i class="iconfont" :class="item.icon"></i>
                   </el-icon>
                   <span>{{ item.name }}</span>
+                </template>
+                <el-menu-item v-for="(i, index) in item.children.filter(child => child.isHidden === 0)" :index="i.path">
+                  <template #title>
+                    <el-icon>
+                      <i class="iconfont" :class="i.icon"></i>
+                    </el-icon>
+                    <span>{{ i.name }}</span>
+                  </template>
                 </el-menu-item>
-              </template>
-         </template>
-      </el-menu>
+              </el-sub-menu>
+            </template>
+            <template v-if="item.children.length == 0 && item.isHidden === 0">
+              <el-menu-item :index="item.path">
+                <el-icon>
+                  <i class="iconfont" :class="item.icon"></i>
+                </el-icon>
+                <span>{{ item.name }}</span>
+              </el-menu-item>
+            </template>
+          </template>
+        </el-menu>
+        </el-scrollbar>
     </el-aside>
-
     <!-- 右侧 -->
     <el-container style="width: 100%;">
       <!-- 顶部 -->
@@ -49,7 +52,7 @@
         </div>
 
         <div class="right">
-          <el-tooltip :content="stat.isDark ? '日常模式' : '暗夜模式'" effect="dark" placement="bottom" >
+          <el-tooltip :content="stat.isDark ? '日常模式' : '暗夜模式'" effect="dark" placement="bottom">
             <div class="icon-container">
               <el-icon size="20px" v-if="stat.isDark" @click="changeDark">
                 <Sunny />
@@ -89,6 +92,9 @@
 <script>
 import { ref, computed, reactive } from 'vue';
 import { useMenuStore } from '../store/menu';
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import 'perfect-scrollbar/css/perfect-scrollbar.css'
+// import { SimpleScrollbar } from 'vue-simple-scrollbar'
 // import { useRoute, useRouter } from 'vue-router';
 export default {
   name: 'Layout',
@@ -105,7 +111,7 @@ export default {
     // const router = useRouter()
 
     const activeMenu = computed(() => route.path)
-    const changeDark = () =>{
+    const changeDark = () => {
       stat.isDark = !stat.isDark
       let html = document.documentElement
       html.className = stat.isDark ? 'dark' : ''
@@ -114,7 +120,7 @@ export default {
       localStorage.removeItem('token')
       router.push('/login')
     }
-    return{
+    return {
       stat,
       isCollapse,
       menuStore,
@@ -122,6 +128,7 @@ export default {
       logout,
       changeDark,
       activeMenu,
+      PerfectScrollbar,
     }
   }
 }
@@ -137,6 +144,7 @@ export default {
 .layout-aside {
   overflow: hidden;
 }
+
 
 .logo {
   height: 60px;
@@ -155,7 +163,8 @@ export default {
   align-items: center;
   padding: 0 20px;
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  .right{
+
+  .right {
     display: flex;
   }
 }
@@ -175,7 +184,12 @@ export default {
   background: #f5f7fa;
   padding: 16px;
 }
-.el-tooltip__trigger{
+
+.el-tooltip__trigger {
   padding-right: 6px;
+}
+
+.iconfont {
+  font-size: 20px;
 }
 </style>

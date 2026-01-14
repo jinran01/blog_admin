@@ -1,5 +1,6 @@
 import axios from 'axios';
 import router from "../router";
+import { lo } from 'element-plus/es/locales.mjs';
 export function request(config) {
     const instance = axios.create(
         {
@@ -30,6 +31,7 @@ export function request(config) {
     })
     //响应拦截
     instance.interceptors.response.use(res => {
+        console.log(res.code);
         return res.data;
     }, error => {
         // return ElMessage.error(error)

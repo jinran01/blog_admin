@@ -6,3 +6,12 @@ export function getRoles(data){
         params:{...data}
     })
 }
+
+//更改角色禁用状态
+export function updateRoleStatus(data){
+    return request({
+        url:"/admin/role/updateStatus",
+        method:"PUT",
+        data
+    })
+}

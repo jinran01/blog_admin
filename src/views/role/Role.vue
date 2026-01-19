@@ -29,17 +29,24 @@
             <el-table-column prop="roleLabel" label="权限字符" width="180" />
             <el-table-column prop="isDisable" label="状态" width="100">
                 <template #default="scope">
-                    <el-switch v-model="scope.row.isDisable" size="small" />
-                    <el-tag :type="scope.row.isDisable == 0 ? 'success' : 'danger'">
-                        {{ scope.row.isDisable == 0 ? "启用" : "禁用" }}
-                    </el-tag>
+                    <el-switch v-model="scope.row.isDisable"
+                        :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false"
+                        style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" :active-value=0
+                        :inactive-value=1 inline-prompt active-text="启用" inactive-text="禁用"
+                        @change="changeDisable(scope.row)" />
                 </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间" width="180" />
             <el-table-column label="操作" width="200">
                 <template #default="scope">
-                    <el-button type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
-                    <el-button type="danger" link @click="handleDelete(scope.row.id)">删除</el-button>
+                    <el-button type="primary" link @click="handleEditMenu(scope.row)"
+                        :disabled="scope.row.roleLabel == 'admin' ? true : false">菜单权限</el-button>
+                    <el-button type="primary" link @click="handleEditResource(scope.row)"
+                        :disabled="scope.row.roleLabel == 'admin' ? true : false">资源权限</el-button>
+                    <el-button type="primary" link @click="handleEdit(scope.row)"
+                        :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false">编辑</el-button>
+                    <el-button type="danger" link @click="handleDelete(scope.row.id)"
+                        :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -51,7 +58,7 @@
         </div>
 
 
-        <!-- 弹框 -->
+        <!-- 新增/编辑弹框 -->
         <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px">
             <el-form :model="formData" :rules="rules" ref="formRef" label-width="100px">
                 <el-form-item label="角色名称" prop="roleName">
@@ -62,8 +69,8 @@
                 </el-form-item>
                 <el-form-item label="状态" prop="isDisable">
                     <el-select v-model="formData.isDisable">
-                        <el-option label="启用" value='0' />
-                        <el-option label="禁用" value='1' />
+                        <el-option label="启用" :value=0 />
+                        <el-option label="禁用" :value=1 />
                     </el-select>
                 </el-form-item>
             </el-form>
@@ -74,20 +81,44 @@
             </template>
         </el-dialog>
 
+        <!-- 分配菜单权限弹框 -->
+        <el-dialog header="分配菜单权限" v-model="dialogVisibleForRoleMemu" width="600px" @close="closeMenuRole">
+            <el-card>
+                <div style="margin-bottom: 10px;">
+                    <el-button type="primary" @click="handleCheckAll">全选</el-button>
+                    <el-button type="danger" @click="handleUncheckAll">清空</el-button>
+                </div>
+
+                <el-tree ref="treeRef" :data="menuTree" node-key="id" show-checkbox 
+                    :props="defaultProps" :default-checked-keys="checkedMenuKeys" :current-node-key="choiceMenuKeys" />
+
+                <div style="margin-top: 20px;">
+                    <el-button type="success" @click="submitMenuRole">提交权限</el-button>
+                </div>
+            </el-card>
+        </el-dialog>
     </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getRoles } from '../../network/role'
+import { getRoles, updateRoleStatus } from '../../network/role'
+import { ElMessage } from 'element-plus'
+import { getAllMenuTree, getMenuIdsByRoleId } from '../../network/menu'
 
 const searchForm = reactive({ roleName: '', isDisable: '' })
 const roleList = ref([])
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(10)
+const menuTree = ref([])
+const checkedMenuKeys = ref([]) // 已勾选ID
+const treeRef = ref(null)
+const choiceMenuKeys = ref([]) // 当前选中ID
 
 const dialogVisible = ref(false)
+const dialogVisibleForRoleMemu = ref(false)
+const dialogVisibleForRoleResource = ref(false)
 const dialogTitle = ref('')
 const formRef = ref(null)
 
@@ -97,7 +128,10 @@ const formData = reactive({
     roleLabel: '',
     isDisable: '1'
 })
-
+const defaultProps = ref({
+    label:'name',
+    children:'children'
+})
 const rules = {
     roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
     roleLabel: [{ required: true, message: '请输入权限字符', trigger: 'blur' }]
@@ -114,7 +148,20 @@ function getRoleList() {
     })
 
 }
+function changeDisable(row) {
+    updateRoleStatus({
+        id: row.id,
+        isDisable: row.isDisable ? 1 : 0
+    }).then(res => {
+        if (res.flag === false) {
+            ElMessage.error(res.message)
+        } else {
+            ElMessage.success(res.message)
+        }
+        getRoleList()
+    })
 
+}
 function handleSearch() {
     pageNum.value = 1
     getRoleList()
@@ -140,7 +187,16 @@ function handleEdit(row) {
 
     dialogVisible.value = true
 }
+function handleEditMenu(row) {
+    getAllMenuTree().then(res=>{
+        menuTree.value = res.data
+    })
+    getMenuIdsByRoleId(row.id).then(res =>{
+        checkedMenuKeys.value = res.data
+    })
+    dialogVisibleForRoleMemu.value = true
 
+}
 function submitForm() {
     formRef.value.validate(async valid => {
         if (!valid) return
@@ -149,10 +205,15 @@ function submitForm() {
         getRoleList()
     })
 }
-
-// function handleDelete(id) {
-//   deleteRole(id).then(() => fetchData())
-// }
+function closeMenuRole(){
+    checkedMenuKeys.value = []
+}
+function submitMenuRole(){
+    // console.log(treeRef.value.getCheckedNodes(false,true));
+    treeRef.value.getCheckedNodes(false,true).forEach(item=>{
+        console.log(item.id);
+    })
+}
 
 onMounted(() => getRoleList())
 </script>

@@ -31,7 +31,6 @@ export function request(config) {
     })
     //响应拦截
     instance.interceptors.response.use(res => {
-        console.log(res.code);
         return res.data;
     }, error => {
         // return ElMessage.error(error)

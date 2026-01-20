@@ -15,3 +15,20 @@ export function updateRoleStatus(data){
         data
     })
 }
+//更改角色菜单权限
+export function updateRoleMenu(data){
+    return request({
+        url:"/admin/role/updateRoleMenu",
+        method:"PUT",
+        data
+    })
+}
+
+//新增或者修改角色
+export function saveOrUpdateRole(data){
+    return request({
+        url:"/admin/role/saveOrUpdateRole",
+        method:"POST",
+        data
+    })
+}

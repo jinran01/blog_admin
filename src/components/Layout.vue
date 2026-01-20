@@ -94,6 +94,7 @@ import { ref, computed, reactive } from 'vue';
 import { useMenuStore } from '../store/menu';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
+import router from '../router';
 // import { SimpleScrollbar } from 'vue-simple-scrollbar'
 // import { useRoute, useRouter } from 'vue-router';
 export default {
@@ -117,8 +118,9 @@ export default {
       html.className = stat.isDark ? 'dark' : ''
     }
     const logout = () => {
-      localStorage.removeItem('token')
       router.push('/login')
+      localStorage.removeItem('Token')
+      // router.push('/login')
     }
     return {
       stat,

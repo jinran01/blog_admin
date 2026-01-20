@@ -4,7 +4,7 @@
         <!-- 搜索条件 -->
         <el-form :inline="true" :model="searchForm" class="search-form">
             <el-form-item label="角色名称">
-                <el-input v-model="searchForm.roleName" placeholder="请输入角色名称" clearable />
+                <el-input v-model="searchForm.keywords" placeholder="请输入角色名称" clearable />
             </el-form-item>
             <el-form-item label="状态">
                 <el-select v-model="searchForm.isDisable" placeholder="选择状态" clearable>
@@ -37,7 +37,7 @@
                 </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间" width="180" />
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作">
                 <template #default="scope">
                     <el-button type="primary" link @click="handleEditMenu(scope.row)"
                         :disabled="scope.row.roleLabel == 'admin' ? true : false">菜单权限</el-button>
@@ -45,8 +45,18 @@
                         :disabled="scope.row.roleLabel == 'admin' ? true : false">资源权限</el-button>
                     <el-button type="primary" link @click="handleEdit(scope.row)"
                         :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false">编辑</el-button>
-                    <el-button type="danger" link @click="handleDelete(scope.row.id)"
-                        :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false">删除</el-button>
+                    <el-popconfirm icon-color="#626AEF" title="确定要删除吗?" @cancel="onCancel">
+                        <template #reference>
+                            <el-button type="danger" link
+                                :disabled="scope.row.roleLabel == 'admin' || scope.row.roleLabel == 'anonymous' ? true : false">删除</el-button>
+                        </template>
+                        <template #actions="{ confirm, cancel }">
+                            <el-button size="small">取消</el-button>
+                            <el-button type="danger" size="small"  @click="confirmDeleteRole(scope.row.id)">
+                                确认
+                            </el-button>
+                        </template>
+                    </el-popconfirm>
                 </template>
             </el-table-column>
         </el-table>
@@ -67,7 +77,7 @@
                 <el-form-item label="权限字符" prop="roleLabel">
                     <el-input v-model="formData.roleLabel" />
                 </el-form-item>
-                <el-form-item label="状态" prop="isDisable">
+                <el-form-item label="状态" prop="isDisable" v-if="dialogTitle == '编辑角色' ? false : true">
                     <el-select v-model="formData.isDisable">
                         <el-option label="启用" :value=0 />
                         <el-option label="禁用" :value=1 />
@@ -89,8 +99,8 @@
                     <el-button type="danger" @click="handleUncheckAll">清空</el-button>
                 </div>
 
-                <el-tree ref="treeRef" :data="menuTree" node-key="id" show-checkbox 
-                    :props="defaultProps" :default-checked-keys="checkedMenuKeys" :current-node-key="choiceMenuKeys" />
+                <el-tree ref="treeRef" :data="menuTree" node-key="id" show-checkbox :props="defaultProps"
+                    :default-checked-keys="checkedMenuKeys" />
 
                 <div style="margin-top: 20px;">
                     <el-button type="success" @click="submitMenuRole">提交权限</el-button>
@@ -102,11 +112,12 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getRoles, updateRoleStatus } from '../../network/role'
+import { getRoles, saveOrUpdateRole, updateRoleMenu, updateRoleStatus } from '../../network/role'
 import { ElMessage } from 'element-plus'
 import { getAllMenuTree, getMenuIdsByRoleId } from '../../network/menu'
+import { da } from 'element-plus/es/locales.mjs'
 
-const searchForm = reactive({ roleName: '', isDisable: '' })
+const searchForm = reactive({ keywords: '', isDisable: '' })
 const roleList = ref([])
 const total = ref(0)
 const pageNum = ref(1)
@@ -114,23 +125,21 @@ const pageSize = ref(10)
 const menuTree = ref([])
 const checkedMenuKeys = ref([]) // 已勾选ID
 const treeRef = ref(null)
-const choiceMenuKeys = ref([]) // 当前选中ID
 
 const dialogVisible = ref(false)
 const dialogVisibleForRoleMemu = ref(false)
 const dialogVisibleForRoleResource = ref(false)
 const dialogTitle = ref('')
 const formRef = ref(null)
-
 const formData = reactive({
     id: null,
     roleName: '',
     roleLabel: '',
-    isDisable: '1'
+    isDisable: 1
 })
 const defaultProps = ref({
-    label:'name',
-    children:'children'
+    label: 'name',
+    children: 'children'
 })
 const rules = {
     roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
@@ -168,53 +177,81 @@ function handleSearch() {
 }
 
 function resetSearch() {
-    searchForm.roleName = ''
+    searchForm.keywords = ''
     searchForm.isDisable = ''
     getRoleList()
 }
 
 function handleAdd() {
     dialogTitle.value = '新增角色'
-    Object.assign(formData, { id: null, roleName: '', roleLabel: '', isDisable: '0' })
+    Object.assign(formData, { id: null, roleName: '', roleLabel: '', isDisable: 1 })
     dialogVisible.value = true
 }
 
 function handleEdit(row) {
     dialogTitle.value = '编辑角色'
-    console.log(row);
     Object.assign(formData, row)
-    console.log(row);
-
     dialogVisible.value = true
 }
+
 function handleEditMenu(row) {
-    getAllMenuTree().then(res=>{
+    getAllMenuTree().then(res => {
         menuTree.value = res.data
     })
-    getMenuIdsByRoleId(row.id).then(res =>{
+    getMenuIdsByRoleId(row.id).then(res => {
         checkedMenuKeys.value = res.data
     })
+    Object.assign(formData, row)
     dialogVisibleForRoleMemu.value = true
 
 }
 function submitForm() {
     formRef.value.validate(async valid => {
         if (!valid) return
-        formData.id ? await updateRole(formData) : await addRole(formData)
+        saveOrUpdateRole(formData).then(res => {
+            if (res.flag === false) {
+                ElMessage.error(res.message)
+            } else {
+                getRoleList()
+                ElMessage.success(res.message)
+            }
+        })
+        // formData.id ? await updateRole(formData) : await addRole(formData)
         dialogVisible.value = false
-        getRoleList()
     })
 }
-function closeMenuRole(){
+function closeMenuRole() {
     checkedMenuKeys.value = []
 }
-function submitMenuRole(){
-    // console.log(treeRef.value.getCheckedNodes(false,true));
-    treeRef.value.getCheckedNodes(false,true).forEach(item=>{
-        console.log(item.id);
+function submitMenuRole() {
+    let menuIds = []
+    treeRef.value.getCheckedNodes(false, true).forEach(item => {
+        menuIds.push(item.id)
+    })
+    updateRoleMenu({ 'roleId': formData.id, 'menuIds': menuIds }).then(res => {
+        Object.assign(formData, { id: null, roleName: '', roleLabel: '', isDisable: 1 })
     })
 }
-
+function handleCheckAll() {
+    treeRef.value.data.forEach(item => {
+        treeRef.value.setChecked(item.id, true, true)
+    })
+}
+function handleUncheckAll() {
+    treeRef.value.setCheckedKeys([])
+}
+function confirmDeleteRole(roleId) {
+    // 调用删除接口
+    // deleteRole(roleId).then(res => {
+    //     if (res.flag === false) {
+    //         ElMessage.error(res.message)
+    //     } else {
+    //         getRoleList()
+    //         ElMessage.success(res.message)
+    //     }
+    // })
+    console.log("删除角色ID:", roleId);
+}
 onMounted(() => getRoleList())
 </script>
 

@@ -118,8 +118,11 @@ export default {
       html.className = stat.isDark ? 'dark' : ''
     }
     const logout = () => {
-      router.push('/login')
+      // router.push('/login').then(()=>{
+      //   window.location.reload()
+      // })
       localStorage.removeItem('Token')
+      window.location.reload()
       // router.push('/login')
     }
     return {

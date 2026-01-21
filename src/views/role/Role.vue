@@ -112,7 +112,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getRoles, saveOrUpdateRole, updateRoleMenu, updateRoleStatus } from '../../network/role'
+import { getRoles, saveOrUpdateRole, updateRoleMenu, updateRoleStatus, deleteRole } from '../../network/role'
 import { ElMessage } from 'element-plus'
 import { getAllMenuTree, getMenuIdsByRoleId } from '../../network/menu'
 import { da } from 'element-plus/es/locales.mjs'
@@ -230,6 +230,12 @@ function submitMenuRole() {
     })
     updateRoleMenu({ 'roleId': formData.id, 'menuIds': menuIds }).then(res => {
         Object.assign(formData, { id: null, roleName: '', roleLabel: '', isDisable: 1 })
+        if (res.flag === false) {
+            ElMessage.error(res.message)
+        } else {
+            ElMessage.success(res.message)
+            dialogVisibleForRoleMemu.value = false
+        }
     })
 }
 function handleCheckAll() {
@@ -242,14 +248,14 @@ function handleUncheckAll() {
 }
 function confirmDeleteRole(roleId) {
     // 调用删除接口
-    // deleteRole(roleId).then(res => {
-    //     if (res.flag === false) {
-    //         ElMessage.error(res.message)
-    //     } else {
-    //         getRoleList()
-    //         ElMessage.success(res.message)
-    //     }
-    // })
+    deleteRole(roleId).then(res => {
+        if (res.flag === false) {
+            ElMessage.error(res.message)
+        } else {
+            getRoleList()
+            ElMessage.success(res.message)
+        }
+    })
     console.log("删除角色ID:", roleId);
 }
 onMounted(() => getRoleList())

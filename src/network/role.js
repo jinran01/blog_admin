@@ -32,3 +32,11 @@ export function saveOrUpdateRole(data){
         data
     })
 }
+
+//新增或者修改角色
+export function deleteRole(id){
+    return request({
+        url:`/admin/role/delete/${id}`,
+        method:"DELETE"
+    })
+}

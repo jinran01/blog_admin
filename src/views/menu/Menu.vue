@@ -29,7 +29,7 @@
             <el-table-column prop="icon" label="图标" width="60" align="center">
               <template #default="scope">
                 <el-icon>
-                  <i class='iconfont' :class="scope.row.icon"></i>
+                  <i class='fa' :class="scope.row.icon"></i>
                 </el-icon>
               </template>
             </el-table-column>
@@ -57,16 +57,15 @@
     </el-row>
 
     <!-- 弹窗 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="520px" class="dialog-form">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="90px" label-position="left">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="520px" class="dialog-form" >
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="90px" label-position="left" >
 
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入菜单名称" clearable />
         </el-form-item>
-
         <el-form-item label="图标" prop="icon">
           <el-icon>
-            <i class="iconfont" :class="form.icon"></i>
+            <icon-picker v-model="form.icon"></icon-picker>
           </el-icon>
         </el-form-item>
 
@@ -82,16 +81,22 @@
           <el-tree-select v-model="form.parentId" :data="menuTree" :props="treeProps" check-strictly clearable
             placeholder="默认顶级" />
         </el-form-item>
-
+        <el-form-item label="是否隐藏" prop="isHidden">
+          <el-select v-model="form.isHidden" placeholder="Select" style="width: 60px;">
+            <el-option :key="form.isHidden" label="否" :value=0 />
+            <el-option :key="form.isHidden" label="是" :value=1 />
+          </el-select>
+          
+        </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" />
+          <el-input-number v-model="form.orderNum" :min="0" />
         </el-form-item>
 
       </el-form>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button type="primary" @click="saveOrUpdateMenu">确定</el-button>
       </template>
 
     </el-dialog>
@@ -102,7 +107,8 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getAllMenuTree } from "../../network/menu";
+import { getAllMenuTree, saveOrUpdate, } from "../../network/menu";
+import IconPicker from "../../components/IconPicker.vue";
 
 const menuTree = ref([]);
 const menuList = ref([]);
@@ -150,11 +156,12 @@ const formRef = ref(null);
 const form = reactive({
   id: null,
   name: "",
-  type: 0,
+  // type: 0,
   path: "",
   component: "",
-  parentId: 0,
-  sort: 0,
+  parentId: null,
+  isHidden: 0,
+  orderNum: 0,
 });
 
 const rules = {
@@ -163,22 +170,27 @@ const rules = {
 };
 
 const openDialog = (mode, row) => {
+  console.log(row);
+  
   dialogTitle.value = mode === "add" ? "新增菜单" : "编辑菜单";
   dialogVisible.value = true;
   if (mode === "edit") Object.assign(form, row);
-  else Object.assign(form, { id: null, name: "", type: 0, path: "", component: "", parentId: 0, sort: 0 });
+  else Object.assign(form, { id: null, name: "", path: "", component: "", parentId: null, orderNum: 0,creatTime:null,updateTime:null});
 };
 
-const submitForm = () => {
+const saveOrUpdateMenu = () => {
   formRef.value.validate(async (valid) => {
     if (!valid) return;
-    if (form.id) {
-      await axios.put("/api/menu", form);
-      ElMessage.success("修改成功");
-    } else {
-      await axios.post("/api/menu", form);
-      ElMessage.success("新增成功");
-    }
+    saveOrUpdate(form).then(res => {
+      if(res.flag === false){
+        ElMessage.error(res.message);
+      }else{
+        Object.assign(form, { id: null, name: "", path: "", component: "", parentId: null, orderNum: 0,creatTime:null,updateTime:null});
+        ElMessage.success(res.message);
+      }
+    }).catch(() => {
+      ElMessage.error(dialogTitle.value + "失败");
+    });
     dialogVisible.value = false;
     loadMenu();
   });

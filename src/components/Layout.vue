@@ -14,14 +14,14 @@
               <el-sub-menu :index="item.path">
                 <template #title>
                   <el-icon>
-                    <i class="iconfont" :class="item.icon"></i>
+                    <i class="fa" :class="item.icon"></i>
                   </el-icon>
                   <span>{{ item.name }}</span>
                 </template>
                 <el-menu-item v-for="(i, index) in item.children.filter(child => child.isHidden === 0)" :index="i.path">
                   <template #title>
                     <el-icon>
-                      <i class="iconfont" :class="i.icon"></i>
+                      <i class="fa" :class="i.icon"></i>
                     </el-icon>
                     <span>{{ i.name }}</span>
                   </template>
@@ -31,7 +31,7 @@
             <template v-if="item.children.length == 0 && item.isHidden === 0">
               <el-menu-item :index="item.path">
                 <el-icon>
-                  <i class="iconfont" :class="item.icon"></i>
+                  <i class="fa" :class="item.icon"></i>
                 </el-icon>
                 <span>{{ item.name }}</span>
               </el-menu-item>

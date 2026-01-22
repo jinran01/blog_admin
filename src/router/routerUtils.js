@@ -10,6 +10,7 @@ export function addMenusToRouter(menuTree) {
     const route = transformMenuToRoute(menu)
     router.addRoute(route)
   })
+  
 }
 
 function transformMenuToRoute(menu) {
@@ -35,8 +36,8 @@ function transformMenuToRoute(menu) {
   }
   if (menu.children && menu.children.length > 0) {
     route.children = menu.children.map(child => transformMenuToRoute(child))
-  }
-
+  }  
+  
   return route
 }
 

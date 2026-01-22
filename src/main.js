@@ -4,9 +4,10 @@ import router from './router'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import "./assets/icons/css/all.css"
 import 'element-plus/theme-chalk/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css'
-import './assets/icons/blogicon/iconfont.css'
+// import './assets/icons/blogicon/iconfont.css'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
 import App from './App.vue'
 

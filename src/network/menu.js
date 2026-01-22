@@ -20,3 +20,12 @@ export function getMenuIdsByRoleId(roleId){
         method:"GET",
     })
 }
+
+// 新增或者更新菜单
+export function saveOrUpdate(data){
+    return request({
+        url:`/admin/menu/saveOrUpdate`,
+        method:"POST",
+        data
+    })
+}
